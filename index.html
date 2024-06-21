@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background: url(./img/cards/bg.jpg);
+            background-size: cover;
+        }
+
+        #game {
+            width: 800px;
+            height: 800px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .card {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            margin: 10px;
+            transform-style: preserve-3d;
+            float: left;
+            transition: transform 1s;
+        }
+
+        .card-front {
+            width: 150px;
+            height: 150px;
+            background-image: url(./img/cards/1H.jpg);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: absolute;
+            backface-visibility: hidden;
+        }
+
+        .card-back {
+            width: 150px;
+            height: 150px;
+            background-image: url(./img/cards/back.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: absolute;
+            backface-visibility: hidden;
+            transform: rotateY(180deg);
+        }
+
+        .card-close {
+            transform: rotateY(180deg);
+        }
+
+        #popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #popup img {
+            max-width: 80%;
+            max-height: 80%;
+            animation: zoomIn 1s;
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #restart {
+            display: none;
+            margin-top: 20px;
+            padding: 30px 80px;
+            font-size: 72px;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 1);
+            color: white;
+            border: none;
+            border-radius: 500px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: "微軟正黑體";
+        }
+
+        #start-screen {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: url(./img/cards/startbg.jpg);
+            background-size: cover;
+        }
+
+        #start-screen button {
+            padding: 10px 20px;
+            font-size: 140px;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 0);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 450px;
+            margin-left: 10rem;
+            transition: transform 0.3s;
+        }
+
+        #start-screen button:hover {
+            transform: scale(0.95);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="start-screen">
+        <button id="start-game">START</button>
+    </div>
+
+    <div id="game"></div>
+
+    <div id="popup">
+        <span class="popup-close">&times;</span>
+        <img src="" alt="Popup Image">
+    </div>
+
+    <button id="restart">再次召喚</button>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'
+        integrity='sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=='
+        crossorigin='anonymous'></script>
+    <script>
+        function createGame() {
+            $('#game').empty();
+            // 產生卡片
+            for (let i = 0; i < 16; i++) {
+                $('#game').append(`
+                <div class="card card-close">
+                    <div class="card-front"></div>
+                    <div class="card-back"></div>
+                </div>
+                `);
+            }
+
+            $('.card').each(function (index) {
+                const number = index % 8 + 1;
+                console.log(index, number);
+                $(this).find('.card-front').css('background-image', `url(./img/cards/${number}H.jpg)`);
+                $(this).attr('data-number', number);
+            });
+
+            for (let i = 0; i < 40; i++) {
+                const randA = Math.round(Math.random() * 15);
+                const randB = Math.round(Math.random() * 15);
+                $('.card').eq(randA).insertAfter($('.card').eq(randB));
+            }
+
+            $('.card').click(function () {
+                // 翻牌
+                if (
+                    // .card 沒有 .card-close 代表被翻開
+                    // 如果已翻開數量小於 2
+                    $('.card:not(.card-close)').length < 2 &&
+                    // 這張牌還沒被翻開
+                    $(this).hasClass('card-close') &&
+                    // 這張牌還沒配對
+                    !$(this).hasClass('card-ok')
+                ) {
+                    $(this).removeClass('card-close');
+                }
+
+                // 翻開兩張了
+                if ($('.card:not(.card-close)').length === 2) {
+                    // 如果兩張都一樣
+                    if (
+                        $('.card:not(.card-close)').eq(0).attr('data-number') ===
+                        $('.card:not(.card-close)').eq(1).attr('data-number')
+                    ) {
+                        const matchedCardImage = $('.card:not(.card-close)').eq(0).find('.card-front').css('background-image');
+                        $('.card:not(.card-close)').addClass('card-ok');
+                        $('.card:not(.card-close)').fadeTo(1000, 0, function () {
+                            // 顯示彈出框並設置圖片
+                            const imageUrl = matchedCardImage.slice(5, -2); // 提取 url("path") 中的 path 部分
+                            $('#popup img').attr('src', imageUrl);
+                            $('#popup').css('display', 'flex').hide().fadeIn();
+                        });
+                    }
+
+                    setTimeout(function () {
+                        $('.card:not(.card-close)').addClass('card-close');
+                        if (
+                            $('.card-ok').length === $('.card').length
+                        ) {
+                            alert('你所召喚的怪獸是');
+                            $('#restart').fadeIn();
+                        }
+                    }, 1000);
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            // 开始游戏按钮
+            $('#start-game').click(function () {
+                $('#start-screen').fadeOut();
+                createGame();
+            });
+
+            // 重新開始按鈕
+            $('#restart').click(function () {
+                $(this).fadeOut();
+                createGame();
+            });
+
+            // 關閉彈出框
+            $('#popup .popup-close').click(function () {
+                $('#popup').fadeOut();
+            });
+
+            $(window).click(function (event) {
+                if (event.target.id === 'popup') {
+                    $('#popup').fadeOut();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
